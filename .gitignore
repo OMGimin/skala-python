@@ -1,0 +1,26 @@
+# Python virtual environments and caches
+.venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.ruff_cache/
+
+# macOS metadata
+.DS_Store
+
+# Generated outputs
+**/output/
+*.parquet
+
+# Large reproducible datasets (regenerate with generate_data.py)
+**/events_large.csv
+**/web_logs.csv
+
+# Instructor-provided guide documents are kept local
+과제/*.pdf
+과제/*.docx
+과제/*가이드*.txt
+
+# Temporary files
+tmp/
+
