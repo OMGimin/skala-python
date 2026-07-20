@@ -22,7 +22,7 @@ from pathlib import Path
 from typing import Iterator
 
 
-DATA_DIR = Path(__file__).resolve().parents[2] / "0720_0721_광주_파이썬_데이터분석_데이터자료"
+DATA_DIR = Path(__file__).resolve().parents[1] / "data"
 DEFAULT_CSV_PATH = DATA_DIR / "web_logs.csv"
 
 

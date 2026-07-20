@@ -6,7 +6,7 @@
 타입 불일치, 스키마 변형)을 의도적으로 주입하여 전처리 실습의 난이도를
 '중상' 수준으로 맞춘다.
 
-실행:
+실행(Python_data_0720_Day1 폴더 기준):
     python data/generate_data.py
 
 산출물(data/ 디렉터리):
