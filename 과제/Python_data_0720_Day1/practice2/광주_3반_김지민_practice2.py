@@ -10,6 +10,7 @@
 
 변경 내역:
     2026-07-20: Day1 practice2 제출용 파일 최초 작성
+    2026-07-20: 오류 행·필드·사유를 콘솔 표 형식으로 출력
 """
 
 from __future__ import annotations
@@ -170,6 +171,16 @@ def print_results(valid_records: list[UserRecord], error_records: list[dict[str,
     print(f"정상 레코드 수: {len(valid_records)}")
     print(f"오류 레코드 수: {len(error_records)}")
     print("오류 row 번호:", [error["row_number"] for error in error_records])
+
+    if error_records:
+        print("\n오류 상세")
+        print(f"{'ROW':<6}{'필드':<20}오류 사유")
+        print("-" * 70)
+        for error_record in error_records:
+            for detail in error_record["errors"]:
+                field = ".".join(str(part) for part in detail["loc"])
+                print(f"{error_record['row_number']:<6}{field:<20}{detail['msg']}")
+
     print(f"결과 저장 위치: {OUTPUT_DIR}")
 
 

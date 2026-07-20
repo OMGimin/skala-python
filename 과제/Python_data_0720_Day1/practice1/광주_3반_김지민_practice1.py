@@ -11,6 +11,7 @@
 
 변경 내역:
     2026-07-20: Day1 practice1 제출용 파일 최초 작성
+    2026-07-20: 접근가이드에 맞춰 제너레이터 행을 reduce fold로 직접 누적
 """
 
 from __future__ import annotations
@@ -19,11 +20,23 @@ import csv
 from collections import Counter, defaultdict
 from functools import reduce
 from pathlib import Path
-from typing import Iterator
+from typing import Iterator, TypedDict
 
 
 DATA_DIR = Path(__file__).resolve().parents[1] / "data"
 DEFAULT_CSV_PATH = DATA_DIR / "web_logs.csv"
+
+
+class LogAccumulator(TypedDict):
+    """로그를 한 행씩 누적하는 fold 상태를 표현한다."""
+
+    total_rows: int
+    path_counter: Counter[str]
+    status_counter: Counter[int]
+    hour_counter: Counter[str]
+    ip_counter: Counter[str]
+    bytes_by_path: defaultdict[str, int]
+    count_by_path: defaultdict[str, int]
 
 
 def stream_log_rows(csv_path: Path) -> Iterator[dict[str, str]]:
@@ -54,6 +67,31 @@ def stream_log_rows(csv_path: Path) -> Iterator[dict[str, str]]:
             yield row
 
 
+def fold_log_row(accumulator: LogAccumulator, row: dict[str, str]) -> LogAccumulator:
+    """현재 로그 한 행을 누적 상태에 반영한다.
+
+    Args:
+        accumulator: 이전 로그까지 누적된 집계 상태
+        row: 새로 읽은 CSV 한 행
+
+    Returns:
+        현재 행이 반영된 누적 상태
+    """
+    status = int(row["status"])
+    byte_size = int(row["bytes"])
+    hour = row["timestamp"][11:13]
+    path = row["path"]
+
+    accumulator["total_rows"] += 1
+    accumulator["path_counter"][path] += 1
+    accumulator["status_counter"][status] += 1
+    accumulator["hour_counter"][hour] += 1
+    accumulator["ip_counter"][row["ip"]] += 1
+    accumulator["bytes_by_path"][path] += byte_size
+    accumulator["count_by_path"][path] += 1
+    return accumulator
+
+
 def aggregate_web_logs(csv_path: Path) -> dict[str, object]:
     """웹 로그를 스트리밍 방식으로 집계한다.
 
@@ -63,29 +101,25 @@ def aggregate_web_logs(csv_path: Path) -> dict[str, object]:
     Returns:
         주요 집계 결과를 담은 딕셔너리
     """
-    path_counter: Counter[str] = Counter()
-    status_counter: Counter[int] = Counter()
-    hour_counter: Counter[str] = Counter()
-    ip_counter: Counter[str] = Counter()
-    bytes_by_path: defaultdict[str, int] = defaultdict(int)
-    count_by_path: defaultdict[str, int] = defaultdict(int)
-    total_rows = 0
+    initial: LogAccumulator = {
+        "total_rows": 0,
+        "path_counter": Counter(),
+        "status_counter": Counter(),
+        "hour_counter": Counter(),
+        "ip_counter": Counter(),
+        "bytes_by_path": defaultdict(int),
+        "count_by_path": defaultdict(int),
+    }
+    aggregated = reduce(fold_log_row, stream_log_rows(csv_path), initial)
 
-    for row in stream_log_rows(csv_path):
-        status = int(row["status"])
-        byte_size = int(row["bytes"])
-        hour = row["timestamp"][11:13]
-        path = row["path"]
-
-        total_rows += 1
-        path_counter[path] += 1
-        status_counter[status] += 1
-        hour_counter[hour] += 1
-        ip_counter[row["ip"]] += 1
-        bytes_by_path[path] += byte_size
-        count_by_path[path] += 1
-
-    total_from_reduce = reduce(lambda acc, count: acc + count, status_counter.values(), 0)
+    total_rows = aggregated["total_rows"]
+    path_counter = aggregated["path_counter"]
+    status_counter = aggregated["status_counter"]
+    hour_counter = aggregated["hour_counter"]
+    ip_counter = aggregated["ip_counter"]
+    bytes_by_path = aggregated["bytes_by_path"]
+    count_by_path = aggregated["count_by_path"]
+    total_from_reduce = aggregated["total_rows"]
     server_error_count = sum(count for status, count in status_counter.items() if 500 <= status < 600)
     server_error_rate = server_error_count / total_rows if total_rows else 0
     average_bytes_by_path = {
@@ -132,7 +166,7 @@ def print_results(result: dict[str, object]) -> None:
     """
     print("\n[실습1] 웹 로그 스트리밍 집계 결과")
     print(f"전체 요청 수: {result['total_rows']:,}")
-    print(f"reduce 검증 요청 수: {result['total_from_reduce']:,}")
+    print(f"reduce 누적 요청 수: {result['total_from_reduce']:,}")
     print(f"5xx 오류율: {result['server_error_rate']:.2%}")
     print(f"인기 페이지 TOP 5: {result['top_paths']}")
     print(f"혼잡 시간대 TOP 5: {result['busy_hours']}")
