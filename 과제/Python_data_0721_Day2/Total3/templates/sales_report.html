@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>{{ title }}</title>
+  <style>
+    :root { --navy:#173f5f; --blue:#20639b; --green:#3caea3; --yellow:#f6d55c; --red:#ed553b; --bg:#f4f7fb; }
+    * { box-sizing:border-box; } body { margin:0;background:var(--bg);color:#243b53;font-family:"Malgun Gothic",Arial,sans-serif; }
+    main { max-width:1120px;margin:34px auto;padding:0 22px 45px; }
+    header { padding:30px;border-radius:18px;color:white;background:linear-gradient(125deg,var(--navy),var(--blue)); }
+    h1 { margin:0 0 8px;font-size:30px; } header p { margin:0;color:#d9eaf7; }
+    .cards { display:grid;grid-template-columns:repeat(4,1fr);gap:13px;margin:18px 0; }
+    .card,section { background:white;border:1px solid #d9e2ec;border-radius:14px;box-shadow:0 5px 18px #102a4310; }
+    .card { padding:18px; } .label { color:#627d98;font-size:13px; } .value { margin-top:7px;font-size:25px;font-weight:700;color:var(--navy); }
+    section { padding:22px;margin-top:16px; } h2 { margin:0 0 14px;font-size:19px;color:var(--navy); }
+    table { width:100%;border-collapse:collapse; } th,td { padding:10px 12px;border-bottom:1px solid #e8eef4;text-align:left; }
+    th { background:#edf4fb; } .number { text-align:right; } .warning { border-left:5px solid var(--red);background:#fff7f5; }
+    .quality { border-left:5px solid var(--green); } .bar-row { display:grid;grid-template-columns:100px 1fr 120px;gap:10px;align-items:center;margin:7px 0; }
+    .track { height:12px;background:#e8eef4;border-radius:8px;overflow:hidden; }.fill { height:100%;background:var(--green); }
+    footer { margin-top:18px;text-align:right;color:#829ab1;font-size:12px; }
+    @media(max-width:760px){ .cards{grid-template-columns:repeat(2,1fr)} .bar-row{grid-template-columns:80px 1fr} .bar-row span:last-child{display:none} }
+  </style>
+</head>
+<body><main>
+  <header><h1>{{ title }}</h1><p>{{ kpis.date_start }} ~ {{ kpis.date_end }} · 생성 {{ generated_at }}</p></header>
+  <div class="cards">
+    <div class="card"><div class="label">정제된 주문</div><div class="value">{{ "{:,}".format(kpis.orders) }}건</div></div>
+    <div class="card"><div class="label">총매출</div><div class="value">{{ "{:,.0f}".format(kpis.total_sales) }}원</div></div>
+    <div class="card"><div class="label">평균 주문금액</div><div class="value">{{ "{:,.0f}".format(kpis.average_order_value) }}원</div></div>
+    <div class="card"><div class="label">지역 수</div><div class="value">{{ kpis.customers_regions }}</div></div>
+  </div>
+  {% if warning %}<section class="warning"><h2>자동 경고</h2><p>{{ warning }}</p></section>{% endif %}
+  <section class="quality"><h2>데이터 품질 확인</h2><p>원본 결측치는 총 {{ missing_before.values()|sum }}건이었으며 정제 규칙을 적용한 뒤 분석했습니다.
+    {% if change_percent is not none %}직전 실행 대비 총매출 변화는 {{ "{:+.2f}".format(change_percent) }}%입니다.{% else %}첫 실행이라 이전 결과와의 비교는 생략했습니다.{% endif %}</p></section>
+  <section><h2>카테고리별 매출</h2><table><thead><tr><th>카테고리</th><th class="number">주문</th><th class="number">수량</th><th class="number">매출</th></tr></thead><tbody>
+    {% for row in category_rows %}<tr><td>{{ row.category }}</td><td class="number">{{ "{:,}".format(row.orders) }}</td><td class="number">{{ "{:,.1f}".format(row.quantity) }}</td><td class="number">{{ "{:,.0f}".format(row.sales) }}원</td></tr>{% endfor %}
+  </tbody></table></section>
+  <section><h2>지역별 매출</h2><table><thead><tr><th>지역</th><th class="number">주문</th><th class="number">매출</th></tr></thead><tbody>
+    {% for row in region_rows %}<tr><td>{{ row.region }}</td><td class="number">{{ "{:,}".format(row.orders) }}</td><td class="number">{{ "{:,.0f}".format(row.sales) }}원</td></tr>{% endfor %}
+  </tbody></table></section>
+  <section><h2>최근 일별 매출 흐름</h2>{% for row in daily_rows[-14:] %}<div class="bar-row"><span>{{ row.date[5:] }}</span><div class="track"><div class="fill" style="width:{{ row.bar_width }}%"></div></div><span class="number">{{ "{:,.0f}".format(row.sales) }}원</span></div>{% endfor %}</section>
+  <section><h2>고액 주문 TOP {{ top_orders|length }}</h2><table><thead><tr><th>주문번호</th><th>날짜</th><th>지역</th><th>카테고리</th><th class="number">매출</th></tr></thead><tbody>
+    {% for row in top_orders %}<tr><td>{{ row.order_id }}</td><td>{{ row.order_date }}</td><td>{{ row.region }}</td><td>{{ row.category }}</td><td class="number">{{ "{:,.0f}".format(row.sales) }}원</td></tr>{% endfor %}
+  </tbody></table></section>
+  <footer>동일한 run_once()를 수동 실행·루프·schedule에서 공통 사용합니다.</footer>
+</main></body></html>
