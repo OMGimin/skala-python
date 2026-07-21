@@ -1,5 +1,0 @@
-is_jfk_pickup,is_early_morning,cash_rate,trips,segment
-0,0,0.10828190303842893,2793911,Non-JFK · Other hours
-0,1,0.11513385432763772,67947,Non-JFK · 04–06
-1,0,0.26031595433872473,132804,JFK · Other hours
-1,1,0.4802342606149341,6147,JFK · 04–06
