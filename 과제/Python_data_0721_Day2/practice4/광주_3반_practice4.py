@@ -2,8 +2,10 @@ from pathlib import Path
 
 import pandas as pd
 
-#pandas 2.x Copy-on-Write 활성화
-pd.options.mode.copy_on_write = True
+# Pandas 2.x에서는 Copy-on-Write를 직접 활성화한다.
+# Pandas 3.x부터는 항상 활성화되어 있어 설정하면 경고가 발생한다.
+if int(pd.__version__.split(".")[0]) < 3:
+    pd.options.mode.copy_on_write = True
 
 #현재 파일이 practice4 폴더 안에 있다고 가정
 BASE_DIR = Path(__file__).resolve().parents[1]

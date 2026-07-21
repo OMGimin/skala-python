@@ -10,6 +10,7 @@ __pycache__/
 
 # Generated outputs
 **/output/
+**/outputs/
 *.parquet
 *.joblib
 
@@ -26,6 +27,11 @@ __pycache__/
 **/events_large.csv
 **/web_logs.csv
 
+# Local assignment datasets (keep generators and source code)
+**/data/*.csv
+**/data/*.json
+수업/Python_Practice*_Data.json
+
 # Instructor-provided guide documents are kept local
 과제/*.pdf
 과제/*.docx
@@ -33,6 +39,10 @@ __pycache__/
 
 # Temporary files
 tmp/
+*.log
+.coverage
+htmlcov/
+**/.ipynb_checkpoints/
 
 # Large classroom datasets
 수업/sales_100k.csv

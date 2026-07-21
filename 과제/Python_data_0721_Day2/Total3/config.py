@@ -1,4 +1,4 @@
-"""종합실습 3에서 공통으로 사용하는 변경 불가능한 설정을 정의한다."""
+"""종합실습 3의 변경 가능한 설정을 한곳에서 관리한다."""
 
 from dataclasses import dataclass
 from pathlib import Path
@@ -7,16 +7,17 @@ from pathlib import Path
 BASE_DIR = Path(__file__).resolve().parent
 
 
-@dataclass(frozen=True, slots=True)
-class Settings:
-    """입력·출력·템플릿 경로와 리포트 표시 옵션을 보관한다."""
+@dataclass(frozen=True)
+class ReportConfig:
+    """실행 중 실수로 변경되지 않는 리포트 설정."""
 
     data_path: Path = BASE_DIR.parent / "data" / "sales_raw.csv"
+    template_path: Path = BASE_DIR / "templates" / "sales_report.html"
     output_dir: Path = BASE_DIR / "output"
-    template_dir: Path = BASE_DIR / "templates"
-    template_name: str = "report.html"
-    report_title: str = "지역·카테고리별 매출 자동화 리포트"
-    top_n: int = 10
+    history_path: Path = BASE_DIR / "output" / "report_history.csv"
+    title: str = "판매 데이터 자동 분석 리포트"
+    top_n: int = 5
+    low_sales_warning_ratio: float = 0.8
 
 
-SETTINGS = Settings()
+CONFIG = ReportConfig()

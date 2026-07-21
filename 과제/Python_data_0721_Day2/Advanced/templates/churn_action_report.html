@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>고객 이탈 대응 리포트</title>
+  <style>
+    :root{--navy:#153b5b;--blue:#2878b5;--red:#d1495b;--green:#2a9d8f;--bg:#f4f7fb;--line:#d9e2ec}
+    *{box-sizing:border-box}body{margin:0;background:var(--bg);color:#243b53;font-family:"Malgun Gothic",Arial,sans-serif}
+    main{max-width:1150px;margin:34px auto;padding:0 22px 45px}header{padding:30px;border-radius:18px;color:white;background:linear-gradient(125deg,var(--navy),var(--blue))}
+    h1{margin:0 0 8px}header p{margin:0;color:#d9eaf7}.cards{display:grid;grid-template-columns:repeat(4,1fr);gap:13px;margin:18px 0}
+    .card,section{background:white;border:1px solid var(--line);border-radius:14px;box-shadow:0 5px 18px #102a4310}.card{padding:18px}.label{color:#627d98;font-size:13px}.value{margin-top:7px;font-size:25px;font-weight:700;color:var(--navy)}
+    section{padding:22px;margin-top:16px;overflow-x:auto}h2{margin:0 0 14px;font-size:19px;color:var(--navy)}table{width:100%;border-collapse:collapse;white-space:nowrap}th,td{padding:10px 11px;border-bottom:1px solid #e8eef4;text-align:left}th{background:#edf4fb}.number{text-align:right}.caution{border-left:5px solid var(--red);background:#fff8f7}
+    .high{color:var(--red);font-weight:700}.best{background:#e8f7f4}footer{margin-top:18px;color:#829ab1;font-size:12px;text-align:right}@media(max-width:760px){.cards{grid-template-columns:repeat(2,1fr)}}
+  </style>
+</head>
+<body><main>
+  <header><h1>고객 이탈 대응 우선순위</h1><p>예측에서 끝내지 않고 누구에게 먼저 연락할지 결정하는 Advanced 분석</p></header>
+  <div class="cards">
+    <div class="card"><div class="label">선택 임계값</div><div class="value">{{ "{:.2f}".format(summary.threshold) }}</div></div>
+    <div class="card"><div class="label">검증 F1</div><div class="value">{{ "{:.3f}".format(summary.validation_f1) }}</div></div>
+    <div class="card"><div class="label">연락 추천</div><div class="value">{{ "{:,}".format(summary.contact_candidates) }}명</div></div>
+    <div class="card"><div class="label">추천 고객 비율</div><div class="value">{{ "{:.1f}".format(summary.candidate_ratio_percent) }}%</div></div>
+  </div>
+  <section><h2>임계값을 왜 바꿨을까?</h2><p>0.5를 정답으로 두지 않고 Precision·Recall·F1을 비교했습니다. 이번 예시는 놓친 이탈 고객과 불필요한 연락 사이의 균형을 위해 F1이 가장 높은 임계값을 선택했습니다.</p>
+    <table><thead><tr><th>임계값</th><th class="number">Precision</th><th class="number">Recall</th><th class="number">F1</th><th class="number">검증 연락 수</th></tr></thead><tbody>
+    {% for row in thresholds %}<tr class="{% if row.threshold == summary.threshold %}best{% endif %}"><td>{{ "{:.2f}".format(row.threshold) }}</td><td class="number">{{ "{:.3f}".format(row.precision) }}</td><td class="number">{{ "{:.3f}".format(row.recall) }}</td><td class="number">{{ "{:.3f}".format(row.f1) }}</td><td class="number">{{ row.customers_flagged }}</td></tr>{% endfor %}</tbody></table>
+  </section>
+  <section><h2>연락 우선 고객 TOP 20</h2><table><thead><tr><th>고객</th><th>계약</th><th>결제</th><th class="number">이용개월</th><th class="number">월요금</th><th class="number">이탈확률</th><th>위험등급</th></tr></thead><tbody>
+    {% for row in top_customers %}<tr><td>{{ row.customer_id }}</td><td>{{ row.contract }}</td><td>{{ row.payment_method }}</td><td class="number">{{ row.tenure_months }}</td><td class="number">{{ "{:,.2f}".format(row.monthly_charges) }}</td><td class="number high">{{ "{:.1%}".format(row.churn_probability) }}</td><td>{{ row.risk_level }}</td></tr>{% endfor %}</tbody></table>
+  </section>
+  <section><h2>계약별 위험도</h2><table><thead><tr><th>계약</th><th class="number">고객 수</th><th class="number">평균 위험확률</th><th class="number">연락 추천</th></tr></thead><tbody>
+    {% for row in summary.contract_risk %}<tr><td>{{ row.contract }}</td><td class="number">{{ row.customers }}</td><td class="number">{{ "{:.1%}".format(row.average_risk) }}</td><td class="number">{{ row.contacts }}</td></tr>{% endfor %}</tbody></table>
+  </section>
+  <section class="caution"><h2>해석 주의</h2><p>{{ summary.caution }}</p></section>
+  <footer>우선순위 점수 = 이탈 확률 × 월 요금 · 실제 혜택 비용과 고객 동의 여부는 별도 검토 필요</footer>
+</main></body></html>
