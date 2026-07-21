@@ -1,0 +1,350 @@
+{
+  "loader_comparison": {
+    "pandas_seconds": 0.2365305420025834,
+    "polars_seconds": 0.10409895799966762,
+    "pandas_shape": [
+      4090836,
+      20
+    ],
+    "polars_shape": [
+      4090836,
+      20
+    ],
+    "same_shape": true,
+    "same_columns": true,
+    "same_missing_counts": true,
+    "missing_counts": {
+      "VendorID": 0,
+      "tpep_pickup_datetime": 0,
+      "tpep_dropoff_datetime": 0,
+      "passenger_count": 955371,
+      "trip_distance": 0,
+      "RatecodeID": 955371,
+      "store_and_fwd_flag": 955371,
+      "PULocationID": 0,
+      "DOLocationID": 0,
+      "payment_type": 0,
+      "fare_amount": 0,
+      "extra": 0,
+      "mta_tax": 0,
+      "tip_amount": 0,
+      "tolls_amount": 0,
+      "improvement_surcharge": 0,
+      "total_amount": 0,
+      "congestion_surcharge": 955371,
+      "Airport_fee": 955371,
+      "cbd_congestion_fee": 0
+    }
+  },
+  "data_quality": {
+    "duplicates_removed": 0,
+    "sequential_counts": {
+      "raw": 4090836,
+      "after_duplicates": 4090836,
+      "after_card_or_cash": 3100494,
+      "after_pickup_in_may": 3100480,
+      "after_duration_1_to_180": 3015377,
+      "after_distance_0_1_to_100": 3004231,
+      "after_fare_0_01_to_500": 3000809,
+      "after_positive_total": 3000809
+    },
+    "final_rows": 3000809,
+    "class_counts": {
+      "Card": 2652933,
+      "Cash": 347876
+    },
+    "class_proportions": {
+      "Card": 0.8840725950901906,
+      "Cash": 0.11592740490980932
+    },
+    "rows_with_any_missing": 0
+  },
+  "eda": {
+    "overall_cash_rate": 0.11592740490980932,
+    "descriptive_statistics": {
+      "trip_distance": {
+        "count": 3000809.0,
+        "mean": 3.44559837697101,
+        "std": 4.477945057787197,
+        "min": 0.1,
+        "25%": 1.01,
+        "50%": 1.73,
+        "75%": 3.44,
+        "95%": 14.4,
+        "99%": 19.9,
+        "max": 98.99
+      },
+      "duration_min": {
+        "count": 3000809.0,
+        "mean": 18.758889663865087,
+        "std": 16.525894827387415,
+        "min": 1.0,
+        "25%": 8.25,
+        "50%": 13.783333333333333,
+        "75%": 23.083333333333332,
+        "95%": 52.483333333333334,
+        "99%": 83.58333333333333,
+        "max": 179.98333333333332
+      },
+      "fare_amount": {
+        "count": 3000809.0,
+        "mean": 20.198662550665503,
+        "std": 17.774340395695205,
+        "min": 0.01,
+        "25%": 9.3,
+        "50%": 14.2,
+        "75%": 23.3,
+        "95%": 62.5,
+        "99%": 77.9,
+        "max": 500.0
+      },
+      "passenger_count": {
+        "count": 3000809.0,
+        "mean": 1.2409730176095846,
+        "std": 0.6326688494746684,
+        "min": 0.0,
+        "25%": 1.0,
+        "50%": 1.0,
+        "75%": 1.0,
+        "95%": 2.0,
+        "99%": 4.0,
+        "max": 8.0
+      }
+    },
+    "correlation": {
+      "trip_distance": {
+        "trip_distance": 1.0,
+        "duration_min": 0.7809791728644819,
+        "fare_amount": 0.9240649224050722,
+        "passenger_count": 0.02546348536297323
+      },
+      "duration_min": {
+        "trip_distance": 0.7809791728644819,
+        "duration_min": 1.0,
+        "fare_amount": 0.7999339846755694,
+        "passenger_count": 0.005758306317965192
+      },
+      "fare_amount": {
+        "trip_distance": 0.9240649224050722,
+        "duration_min": 0.7999339846755694,
+        "fare_amount": 1.0,
+        "passenger_count": 0.04253205583463889
+      },
+      "passenger_count": {
+        "trip_distance": 0.02546348536297323,
+        "duration_min": 0.005758306317965192,
+        "fare_amount": 0.04253205583463889,
+        "passenger_count": 1.0
+      }
+    },
+    "segment_records": [
+      {
+        "is_jfk_pickup": 0,
+        "is_early_morning": 0,
+        "cash_rate": 0.10828190303842893,
+        "trips": 2793911,
+        "segment": "Non-JFK · Other hours"
+      },
+      {
+        "is_jfk_pickup": 0,
+        "is_early_morning": 1,
+        "cash_rate": 0.11513385432763772,
+        "trips": 67947,
+        "segment": "Non-JFK · 04–06"
+      },
+      {
+        "is_jfk_pickup": 1,
+        "is_early_morning": 0,
+        "cash_rate": 0.26031595433872473,
+        "trips": 132804,
+        "segment": "JFK · Other hours"
+      },
+      {
+        "is_jfk_pickup": 1,
+        "is_early_morning": 1,
+        "cash_rate": 0.4802342606149341,
+        "trips": 6147,
+        "segment": "JFK · 04–06"
+      }
+    ]
+  },
+  "statistical_tests": {
+    "welch_t_tests": {
+      "trip_distance": {
+        "cash_mean": 3.4717247524980173,
+        "card_mean": 3.442172455919543,
+        "mean_difference_cash_minus_card": 0.02955229657847447,
+        "t_statistic": 3.501825913166096,
+        "p_value": 0.000462127922828914,
+        "cohens_d": 0.0065995355526208095,
+        "interpretation": "Statistically significant, but practical magnitude is negligible."
+      },
+      "duration_min": {
+        "cash_mean": 17.357350847236756,
+        "card_mean": 18.942671808899814,
+        "mean_difference_cash_minus_card": -1.585320961663058,
+        "t_statistic": -57.61460440992238,
+        "p_value": 0.0,
+        "cohens_d": -0.09597476186469453,
+        "interpretation": "Statistically significant, but practical magnitude is negligible."
+      },
+      "fare_amount": {
+        "cash_mean": 20.375287573733168,
+        "card_mean": 20.175501918065777,
+        "mean_difference_cash_minus_card": 0.19978565566739093,
+        "t_statistic": 5.702912751078934,
+        "p_value": 1.178553287405331e-08,
+        "cohens_d": 0.011240187337183927,
+        "interpretation": "Statistically significant, but practical magnitude is negligible."
+      }
+    },
+    "jfk_early_chi_square": {
+      "contingency_table": {
+        "0": {
+          "0": 2649738,
+          "1": 3195
+        },
+        "1": {
+          "0": 344924,
+          "1": 2952
+        }
+      },
+      "chi2": 7972.975788063892,
+      "p_value": 0.0,
+      "degrees_of_freedom": 1,
+      "cramers_v": 0.05154553430996419,
+      "jfk_early_cash_rate": 0.4802342606149341,
+      "jfk_early_trip_count": 6147,
+      "jfk_early_cash_count": 2952,
+      "other_cash_rate": 0.11517960958532215,
+      "percentage_point_difference": 36.505465102961196,
+      "odds_ratio": 7.097820479253157,
+      "interpretation": "Cash payment is associated with the JFK 04–06 segment; this is an observational association, not a causal effect."
+    }
+  },
+  "model_evaluation": {
+    "sample_rows": 400000,
+    "train_rows": 320000,
+    "test_rows": 80000,
+    "test_cash_rate": 0.115925,
+    "features": [
+      "passenger_count",
+      "trip_distance",
+      "duration_min",
+      "fare_amount",
+      "extra",
+      "mta_tax",
+      "tolls_amount",
+      "improvement_surcharge",
+      "congestion_surcharge",
+      "Airport_fee",
+      "cbd_congestion_fee",
+      "is_jfk_pickup",
+      "is_early_morning",
+      "is_jfk_early",
+      "PULocationID",
+      "DOLocationID",
+      "pickup_hour",
+      "pickup_dayofweek",
+      "is_weekend"
+    ],
+    "excluded_leakage_columns": [
+      "payment_type",
+      "tip_amount",
+      "total_amount",
+      "is_cash"
+    ],
+    "model": {
+      "accuracy": 0.6448875,
+      "balanced_accuracy": 0.6029762313389024,
+      "cash_precision": 0.17354215716381752,
+      "cash_recall": 0.5484149234418805,
+      "cash_f1": 0.26365309349161503,
+      "roc_auc": 0.6577858099957183,
+      "pr_auc": 0.25136907227580957,
+      "confusion_matrix": [
+        [
+          46505,
+          24221
+        ],
+        [
+          4188,
+          5086
+        ]
+      ],
+      "classification_report": {
+        "Card": {
+          "precision": 0.9173850432998639,
+          "recall": 0.6575375392359245,
+          "f1-score": 0.7660250866833033,
+          "support": 70726.0
+        },
+        "Cash": {
+          "precision": 0.17354215716381752,
+          "recall": 0.5484149234418805,
+          "f1-score": 0.26365309349161503,
+          "support": 9274.0
+        },
+        "accuracy": 0.6448875,
+        "macro avg": {
+          "precision": 0.5454636002318407,
+          "recall": 0.6029762313389024,
+          "f1-score": 0.5148390900874591,
+          "support": 80000.0
+        },
+        "weighted avg": {
+          "precision": 0.8311550567245427,
+          "recall": 0.6448875,
+          "f1-score": 0.7077876133725568,
+          "support": 80000.0
+        }
+      }
+    },
+    "majority_baseline": {
+      "accuracy": 0.884075,
+      "balanced_accuracy": 0.5,
+      "cash_precision": 0.0,
+      "cash_recall": 0.0,
+      "cash_f1": 0.0,
+      "roc_auc": 0.5,
+      "pr_auc": 0.115925,
+      "confusion_matrix": [
+        [
+          70726,
+          0
+        ],
+        [
+          9274,
+          0
+        ]
+      ],
+      "classification_report": {
+        "Card": {
+          "precision": 0.884075,
+          "recall": 1.0,
+          "f1-score": 0.9384711330493744,
+          "support": 70726.0
+        },
+        "Cash": {
+          "precision": 0.0,
+          "recall": 0.0,
+          "f1-score": 0.0,
+          "support": 9274.0
+        },
+        "accuracy": 0.884075,
+        "macro avg": {
+          "precision": 0.4420375,
+          "recall": 0.5,
+          "f1-score": 0.4692355665246872,
+          "support": 80000.0
+        },
+        "weighted avg": {
+          "precision": 0.781588605625,
+          "recall": 0.884075,
+          "f1-score": 0.8296788669506258,
+          "support": 80000.0
+        }
+      }
+    }
+  }
+}

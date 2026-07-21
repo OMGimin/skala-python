@@ -1,0 +1,85 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{{ title }}</title>
+  <style>
+    :root { --ink: #172033; --muted: #5f6b7a; --line: #dfe5ec; --accent: #2563eb; }
+    body { margin: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; color: var(--ink); background: #f5f7fa; }
+    main { max-width: 1100px; margin: 32px auto; padding: 36px; background: white; border-radius: 16px; box-shadow: 0 8px 28px rgba(15, 23, 42, .08); }
+    h1, h2, h3 { line-height: 1.25; } h1 { margin-bottom: 4px; } h2 { margin-top: 36px; border-bottom: 2px solid var(--line); padding-bottom: 8px; }
+    .generated { color: var(--muted); } .cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 14px; }
+    .card { border: 1px solid var(--line); border-radius: 12px; padding: 16px; } .value { font-size: 1.55rem; font-weight: 700; color: var(--accent); }
+    table { width: 100%; border-collapse: collapse; margin: 16px 0; font-size: .92rem; } th, td { padding: 9px 10px; border: 1px solid var(--line); text-align: right; }
+    th:first-child, td:first-child { text-align: left; } th { background: #eef3f8; }
+    .result { padding: 14px 16px; border-left: 5px solid var(--accent); background: #eff6ff; }
+    img { max-width: 100%; height: auto; border: 1px solid var(--line); border-radius: 10px; }
+    .chart { min-height: 480px; } code { background: #eef2f7; padding: 2px 5px; border-radius: 4px; }
+  </style>
+</head>
+<body>
+<main>
+  <h1>{{ title }}</h1>
+  <p class="generated">자동 생성: {{ generated }}</p>
+
+  <h2>데이터 준비</h2>
+  <div class="cards">
+    <div class="card"><div>분석 전 행 수</div><div class="value">{{ "{:,}".format(pandas_info.rows) }}</div></div>
+    <div class="card"><div>Pandas 로딩</div><div class="value">{{ "%.3f"|format(pandas_info.load_seconds) }}초</div></div>
+    <div class="card"><div>Polars 로딩</div><div class="value">{{ "%.3f"|format(polars_info.load_seconds) }}초</div></div>
+    <div class="card"><div>결측 셀</div><div class="value">{{ "{:,}".format(pandas_info.null_cells) }}</div></div>
+  </div>
+
+  <h3>필터 단계별 행 수</h3>
+  <table><thead><tr><th>단계</th><th>남은 행</th><th>제외 행</th></tr></thead><tbody>
+  {% for row in audit %}
+    <tr><td>{{ row.step }}</td><td>{{ "{:,}".format(row.rows|int) }}</td><td>{{ "{:,}".format(row.removed|int) }}</td></tr>
+  {% endfor %}
+  </tbody></table>
+
+  <h2>거리·주중/주말 분석</h2>
+  <table><thead><tr><th>거리 그룹</th><th>운행 수</th><th>평균 팁 금액</th><th>평균 팁률</th></tr></thead><tbody>
+  {% for row in distance_summary %}
+    <tr><td>{{ row.distance_group }}</td><td>{{ "{:,}".format(row.trip_count) }}</td><td>${{ "%.2f"|format(row.mean_tip_amount) }}</td><td>{{ "%.2f%%"|format(row.mean_tip_rate * 100) }}</td></tr>
+  {% endfor %}
+  </tbody></table>
+  <p>{{ interpretations.distance }}</p>
+  <img src="figures/distance_tip_comparison.png" alt="거리 그룹별 평균 팁률과 팁 금액">
+
+  <table><thead><tr><th>구분</th><th>운행 수</th><th>평균 팁률</th></tr></thead><tbody>
+  {% for row in day_summary %}
+    <tr><td>{% if row.is_weekend %}주말{% else %}주중{% endif %}</td><td>{{ "{:,}".format(row.trip_count) }}</td><td>{{ "%.2f%%"|format(row.mean_tip_rate * 100) }}</td></tr>
+  {% endfor %}
+  </tbody></table>
+  <p>{{ interpretations.day_type }}</p>
+
+  <h3>시간대별 인터랙티브 차트</h3>
+  <div class="chart">{{ chart_html | safe }}</div>
+
+  <h2>통계 검정</h2>
+  <div class="result">
+  {% if significant %}
+    p-value가 0.05보다 작아 단거리와 장거리의 평균 팁률 차이는 통계적으로 유의합니다.
+  {% else %}
+    p-value가 0.05 이상이므로 평균 팁률 차이가 통계적으로 유의하다고 보기 어렵습니다.
+  {% endif %}
+  </div>
+  <ul>
+    <li>t 통계량: {{ "%.4f"|format(ttest.t_statistic) }}</li>
+    <li>p-value: {% if ttest.p_value < 0.001 %}&lt; 0.001{% else %}{{ "%.4f"|format(ttest.p_value) }}{% endif %}</li>
+    <li>평균 팁률 차이: {{ "%.2f"|format(ttest.difference_percentage_points) }}%p</li>
+    <li>Cohen's d: {{ "%.3f"|format(ttest.cohens_d) }}</li>
+  </ul>
+
+  <h2>ML Pipeline</h2>
+  <div class="cards">
+    <div class="card"><div>Accuracy</div><div class="value">{{ "%.4f"|format(model.accuracy) }}</div></div>
+    <div class="card"><div>F1</div><div class="value">{{ "%.4f"|format(model.f1) }}</div></div>
+    <div class="card"><div>ROC-AUC</div><div class="value">{{ "%.4f"|format(model.roc_auc) }}</div></div>
+  </div>
+  <p><code>{{ model.model }}</code>을 사용했으며 전처리와 분류기를 하나의 sklearn Pipeline으로 저장했습니다.</p>
+  <p>{{ interpretations.model }}</p>
+</main>
+</body>
+</html>

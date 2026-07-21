@@ -11,6 +11,16 @@ __pycache__/
 # Generated outputs
 **/output/
 *.parquet
+*.joblib
+
+# Local environment files (keep only a safe example)
+.env
+.env.*
+!.env.example
+
+# Day 2 team project data: download/regenerate from README
+수업/Python_day2_종합실습2_3반_2조/data/raw/
+수업/Python_day2_종합실습2_3반_2조/data/processed/
 
 # Large reproducible datasets (regenerate with generate_data.py)
 **/events_large.csv

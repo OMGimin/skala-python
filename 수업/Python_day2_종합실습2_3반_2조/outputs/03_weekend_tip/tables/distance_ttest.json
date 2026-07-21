@@ -1,0 +1,12 @@
+{
+  "hypothesis_null": "5마일 미만과 5마일 이상 카드 운행의 평균 팁률은 같다.",
+  "short_n": 2182308,
+  "long_n": 476632,
+  "short_mean_tip_rate": 0.1741345204615516,
+  "long_mean_tip_rate": 0.13910080835769353,
+  "difference_percentage_points": 3.5033712103858057,
+  "t_statistic": 240.37674368107506,
+  "p_value": 0.0,
+  "cohens_d": 0.4434872444017323,
+  "significant_at_0_05": true
+}

@@ -1,0 +1,10 @@
+step,rows,removed
+remove_exact_duplicates,4090836,0
+card_payment_only,2727585,1363251
+pickup_in_2026_05,2727575,10
+positive_trip_distance,2706192,21383
+positive_fare_amount,2706037,155
+nonnegative_tip,2706037,0
+positive_base_amount,2706037,0
+tip_rate_0_to_1,2704399,1638
+duration_0_to_180_min,2658940,45459

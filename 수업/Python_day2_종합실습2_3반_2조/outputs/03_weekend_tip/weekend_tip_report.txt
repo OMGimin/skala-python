@@ -1,0 +1,169 @@
+# NYC Yellow Taxi 카드 팁 분석 보고서
+
+## 1. 분석 목적
+
+2026년 5월 NYC Yellow Taxi 카드 결제 운행에서 거리와 시간적 특성이 팁률 및
+고팁 여부에 어떤 관계를 보이는지 분석했다. 현금 팁은 완전하게 기록되지 않을 수
+있으므로 팁 분석은 `payment_type=1`로 제한했다.
+
+## 2. 데이터 준비
+
+- 원본: NYC TLC Yellow Taxi Trip Records, 2026-05
+- 팁률: `tip_amount / (total_amount - tip_amount)`
+- 단거리: 5마일 미만, 장거리: 5마일 이상
+- 고팁: 팁률 20% 이상
+- 원본 파일은 Git에 포함하지 않고 공식 다운로드 스크립트로 재현한다.
+
+### Pandas·Polars 로딩 비교
+
+| 엔진 | 행 | 열 | 로딩 시간(초) | 추정 메모리(MB) | 결측 셀 | 제거 대상 중복 행 |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: |
+| Pandas | 4,090,836 | 20 | 0.1519 | 580.62 | 4,776,855 | 0 |
+| Polars | 4,090,836 | 20 | 0.0534 | 550.13 | 4,776,855 | 0 |
+
+두 엔진의 행·열, 결측치, 중복 결과가 일치하는지 자동 검증했다.
+
+### 필터 단계별 행 수
+
+| step | rows | removed |
+| --- | --- | --- |
+| remove_exact_duplicates | 4090836 | 0 |
+| card_payment_only | 2727585 | 1363251 |
+| pickup_in_2026_05 | 2727575 | 10 |
+| positive_trip_distance | 2706192 | 21383 |
+| positive_fare_amount | 2706037 | 155 |
+| nonnegative_tip | 2706037 | 0 |
+| positive_base_amount | 2706037 | 0 |
+| tip_rate_0_to_1 | 2704399 | 1638 |
+| duration_0_to_180_min | 2658940 | 45459 |
+
+## 3. 핵심 기술통계
+
+### 거리 그룹
+
+| distance_group | trip_count | mean_tip_amount | mean_tip_rate | std_tip_rate | median_tip_rate | q25_tip_rate | q75_tip_rate |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| long_ge_5mi | 476632 | 8.6231 | 0.1391 | 0.0943 | 0.1936 | 0.0279 | 0.2000 |
+| short_lt_5mi | 2182308 | 3.3018 | 0.1741 | 0.0752 | 0.2000 | 0.1493 | 0.2000 |
+
+단거리 평균 팁 금액은 $3.30, 평균 팁률은
+17.41%였다. 장거리 평균 팁 금액은
+$8.62, 평균 팁률은 13.91%였다.
+장거리 평균 팁 금액이 단거리보다 $5.32 높았다. 장거리 평균 팁률이 단거리보다 3.50%p 낮았다.
+
+### 주중·주말
+
+| is_weekend | trip_count | mean_tip_amount | mean_tip_rate | std_tip_rate | median_tip_rate | q25_tip_rate | q75_tip_rate |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| False | 1892170 | 4.2956 | 0.1671 | 0.0805 | 0.2000 | 0.1238 | 0.2000 |
+| True | 766770 | 4.1572 | 0.1696 | 0.0791 | 0.2000 | 0.1335 | 0.2000 |
+
+주중 평균 팁률은 16.71%, 주말은
+16.96%였다. 주말 평균 팁률이 주중보다 0.25%p 높았다.
+
+## 4. 시각화
+
+![거리 그룹별 팁 비교](figures/distance_tip_comparison.png)
+
+- 인터랙티브 차트: [시간대별 주중·주말 팁률](figures/hourly_tip_interactive.html)
+
+## 5. 통계 검정
+
+- 귀무가설: 5마일 미만과 5마일 이상 카드 운행의 평균 팁률은 같다.
+- Welch t 통계량: 240.3767
+- p-value: < 0.001
+- 평균 팁률 차이: 3.50%p
+- Cohen's d: 0.443
+
+p-value가 0.05보다 작으므로 두 거리 그룹의 평균 팁률 차이는 통계적으로 유의하다. Cohen's d는 차이의 실질적 크기를 보완해서 보여준다. 표본이 매우
+크므로 p-value만으로 중요성을 판단하지 않는다.
+
+## 6. ML Pipeline
+
+### 6.1 목표변수와 입력 변수
+
+- 목표변수: `high_tip` (팁률 20% 이상이면 1, 아니면 0)
+- 수치형 입력: 운행 거리, 기본요금, 운행시간, 승차 시간
+- 범주형 입력: 요일, 승차 지역 ID, 하차 지역 ID
+- 학습 표본: 250,000건
+
+`tip_amount`, `tip_rate`, `total_amount`, `base_amount`는 목표를 직접 또는
+간접적으로 포함하므로 데이터 누수를 막기 위해 입력에서 제외했다.
+
+### 6.2 전처리와 모델 구조
+
+```text
+sklearn.pipeline.Pipeline
+├── ColumnTransformer
+│   ├── 수치형: SimpleImputer(median) → StandardScaler
+│   └── 범주형: SimpleImputer(most_frequent) → OneHotEncoder
+└── SGDClassifier(loss="log_loss")
+```
+
+전처리와 분류기를 하나의 Pipeline으로 묶어 학습과 새로운 데이터 예측에 항상
+같은 변환이 적용되도록 했다.
+
+### 6.3 SGDClassifier 선택 이유
+
+카드 결제 분석 데이터가 265만 건 이상이고 승하차 지역을 원-핫 인코딩하면
+희소 특성이 많아진다. `SGDClassifier(loss="log_loss")`는 대규모 희소 행렬을
+빠르고 비교적 적은 메모리로 학습할 수 있으며 확률 출력도 지원해 ROC-AUC를
+계산할 수 있다. 반면 선형 모델이므로 복잡한 비선형 관계와 특성 간 상호작용을
+충분히 학습하지 못할 수 있다.
+
+### 6.4 평가 결과
+
+| 지표 | 값 | 의미 |
+| --- | ---: | --- |
+| Accuracy | 0.5613 | 전체 테스트 표본 중 올바르게 분류한 비율 |
+| F1 | 0.6046 | 고팁 클래스의 Precision과 Recall 조화평균 |
+| ROC-AUC | 0.6394 | 임계값 전체에서 고팁과 비고팁을 구분하는 능력 |
+
+Accuracy 0.5613, F1 0.6046, ROC-AUC 0.6394로 측정됐다. 이 값은 현재 입력 특성과 평가 표본에서의 예측 성능이며 인과관계를 의미하지 않는다. 실제 서비스 적용 여부는 별도의 기준 모델, 교차검증,
+운영 목적에 맞는 임계값과 함께 판단해야 한다.
+
+### 6.5 대안 모델 비교
+
+| 모델 | 장점 | 단점 |
+| --- | --- | --- |
+| Logistic Regression | 해석이 쉽고 확률 출력 가능 | 대규모 희소 데이터에서 수렴이 느릴 수 있음 |
+| SGDClassifier | 빠르고 대규모·희소 데이터에 적합 | 복잡한 비선형 관계 학습에 한계 |
+| Random Forest | 비선형 관계와 상호작용 학습 | 메모리와 학습 시간이 많이 필요 |
+| Gradient Boosting | 높은 예측 성능 가능 | 범주형 처리와 튜닝이 더 복잡함 |
+| CatBoost | 지역 ID 같은 범주형 변수 처리에 강함 | 추가 라이브러리와 학습 비용 필요 |
+
+이번 실습은 sklearn Pipeline 구성과 재현 가능한 기본 분류 모델이 목적이므로
+SGDClassifier를 사용했다. 성능 개선이 우선이라면 CatBoost나 Gradient
+Boosting 계열 모델을 비교할 수 있다.
+
+### 6.6 모델 저장과 재사용
+
+- 저장 모델: `models/high_tip_pipeline.joblib`
+
+```python
+import joblib
+
+pipeline = joblib.load("models/high_tip_pipeline.joblib")
+predictions = pipeline.predict(new_data)
+probabilities = pipeline.predict_proba(new_data)[:, 1]
+```
+
+joblib 파일에는 전처리와 분류기가 함께 저장되어 있다. 로딩 환경에서는 학습 때와
+동일한 패키지 버전을 사용하고, 신뢰할 수 없는 joblib 파일은 역직렬화하지 않는다.
+
+### 6.7 개선 방향
+
+- 공항 운행 여부, 날씨, 휴일, 지역 특성 추가
+- 시간 순서를 반영한 학습·평가 분할
+- 임계값 조정과 Precision·Recall 비교
+- 비선형 모델과 교차검증 비교
+- 거리 기준과 고팁 기준에 대한 민감도 분석
+
+모델 성능은 관측 특성의 예측력을 의미하며, 각 변수가 팁 행동의 원인이라는 것을
+입증하지 않는다.
+
+## 7. 결론과 한계
+
+장거리 평균 팁 금액이 단거리보다 $5.32 높았다. 장거리 평균 팁률이 단거리보다 3.50%p 낮았다. 주말 평균 팁률이 주중보다 0.25%p 높았다. 분석은 카드 결제로 제한되므로 전체 승객의 현금 팁
+행동으로 일반화할 수 없고, 관측 데이터이므로 거리와 팁률 사이의 인과관계를
+입증하지 않는다.
