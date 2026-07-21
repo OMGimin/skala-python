@@ -1,0 +1,78 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{{ title }}</title>
+  <style>
+    :root { color-scheme: light; --navy: #172554; --blue: #2563eb; --line: #dbe4f0; --muted: #64748b; }
+    * { box-sizing: border-box; }
+    body { margin: 0; background: #f4f7fb; color: #172033; font-family: Arial, "Noto Sans KR", sans-serif; }
+    main { width: min(1120px, calc(100% - 32px)); margin: 32px auto 64px; }
+    header { padding: 28px 32px; border-radius: 18px; color: white; background: linear-gradient(120deg, var(--navy), var(--blue)); }
+    h1 { margin: 0 0 8px; font-size: clamp(24px, 4vw, 38px); }
+    header p { margin: 0; opacity: .82; }
+    .cards { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin: 22px 0; }
+    .card, section { background: white; border: 1px solid var(--line); border-radius: 14px; box-shadow: 0 8px 24px rgba(23,37,84,.06); }
+    .card { padding: 22px; }
+    .label { color: var(--muted); font-size: 14px; }
+    .value { margin-top: 8px; color: var(--navy); font-size: 28px; font-weight: 700; }
+    section { margin-top: 18px; padding: 24px; overflow-x: auto; }
+    h2 { margin: 0 0 16px; font-size: 20px; }
+    table { width: 100%; border-collapse: collapse; }
+    th, td { padding: 12px 10px; border-bottom: 1px solid var(--line); text-align: left; }
+    th { color: var(--muted); font-size: 13px; text-transform: uppercase; }
+    td.number, th.number { text-align: right; }
+    .quality { display: flex; flex-wrap: wrap; gap: 10px 24px; color: var(--muted); font-size: 14px; }
+    @media (max-width: 700px) { .cards { grid-template-columns: 1fr; } header, section { padding: 20px; } }
+  </style>
+</head>
+<body>
+  <main>
+    <header>
+      <h1>{{ title }}</h1>
+      <p>생성 시각: {{ generated_at }}</p>
+    </header>
+
+    <div class="cards">
+      <div class="card"><div class="label">총매출</div><div class="value">₩{{ "{:,.0f}".format(kpi.total_sales) }}</div></div>
+      <div class="card"><div class="label">거래 건수</div><div class="value">{{ "{:,}".format(kpi.transactions) }}건</div></div>
+      <div class="card"><div class="label">평균 주문금액</div><div class="value">₩{{ "{:,.0f}".format(kpi.average_order_value) }}</div></div>
+    </div>
+
+    <section>
+      <h2>데이터 처리 현황</h2>
+      <div class="quality">
+        <span>입력 {{ "{:,}".format(quality.input_rows) }}행</span>
+        <span>유효 {{ "{:,}".format(quality.valid_rows) }}행</span>
+        <span>제외 {{ "{:,}".format(quality.excluded_rows) }}행</span>
+        <span>단가 보완 {{ "{:,}".format(quality.imputed_unit_prices) }}건</span>
+      </div>
+    </section>
+
+    <section>
+      <h2>카테고리별 매출 TOP {{ category_rows|length }}</h2>
+      <table>
+        <thead><tr><th>카테고리</th><th class="number">주문 수</th><th class="number">총매출</th></tr></thead>
+        <tbody>
+          {% for row in category_rows %}
+          <tr><td>{{ row.category }}</td><td class="number">{{ "{:,}".format(row.orders) }}</td><td class="number">₩{{ "{:,.0f}".format(row.total_sales) }}</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </section>
+
+    <section>
+      <h2>지역별 매출</h2>
+      <table>
+        <thead><tr><th>지역</th><th class="number">주문 수</th><th class="number">총매출</th></tr></thead>
+        <tbody>
+          {% for row in region_rows %}
+          <tr><td>{{ row.region }}</td><td class="number">{{ "{:,}".format(row.orders) }}</td><td class="number">₩{{ "{:,.0f}".format(row.total_sales) }}</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </section>
+  </main>
+</body>
+</html>
