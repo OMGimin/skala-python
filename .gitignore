@@ -24,3 +24,5 @@ __pycache__/
 # Temporary files
 tmp/
 
+# Large classroom datasets
+수업/sales_100k.csv
